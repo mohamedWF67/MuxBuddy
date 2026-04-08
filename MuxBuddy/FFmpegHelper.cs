@@ -9,8 +9,20 @@ using FFMpegCore.Enums;
 namespace MuxBuddy;
 
 public static class FFmpegHelperProperties{
-    public static string HelperVersion { get; } = "0.5.8.23";
-} 
+    public static string HelperVersion { get; } = "0.5.8.24";
+}
+
+public enum VideoEncoder
+{
+    NvencH264,
+    NvencH265,
+    AmfH264,
+    AmfH265,
+    QsvH264,
+    QsvH265,
+    CpuH264,
+    CpuH265
+}
 
 public class VideoInfo
 {
@@ -25,6 +37,7 @@ public class VideoInfo
     public int AudioMixMode { get; set; }
     public double StartTime { get; set; }
     public double EndTime { get; set; }
+    public VideoEncoder Encoder { get; set; } = VideoEncoder.CpuH264;
 
     public VideoInfo Clone()
     {
@@ -40,7 +53,8 @@ public class VideoInfo
             AudioStreamsCount = AudioStreamsCount,
             AudioMixMode = AudioMixMode,
             StartTime = StartTime,
-            EndTime = EndTime
+            EndTime = EndTime,
+            Encoder = Encoder
         };
     }
 
@@ -81,7 +95,42 @@ public sealed class FfmpegStats
 public class FFmpegHelper
 {
     private static float BitrateModifer = 0.95f;
-    
+
+    private static string GetEncoderArguments(VideoEncoder encoder, int bitrate)
+    {
+        return encoder switch
+        {
+            // NVIDIA NVENC
+            VideoEncoder.NvencH264 => $"-c:v h264_nvenc -rc cbr_hq -preset p4 -b:v {bitrate}k",
+            VideoEncoder.NvencH265 => $"-c:v hevc_nvenc -profile:v main10 -rc cbr_hq -preset p4 -b:v {bitrate}k -maxrate {bitrate}k -bufsize {bitrate}k",
+
+            // AMD AMF
+            VideoEncoder.AmfH264 => $"-c:v h264_amf -rc cbr -quality quality -b:v {bitrate}k -maxrate {bitrate}k -bufsize {bitrate}k",
+            VideoEncoder.AmfH265 => $"-c:v hevc_amf -rc cbr -quality quality -b:v {bitrate}k -maxrate {bitrate}k -bufsize {bitrate}k",
+
+            // Intel Quick Sync
+            VideoEncoder.QsvH264 => $"-c:v h264_qsv -preset medium -b:v {bitrate}k",
+            VideoEncoder.QsvH265 => $"-c:v hevc_qsv -preset medium -b:v {bitrate}k",
+
+            // CPU encoding
+            VideoEncoder.CpuH264 => $"-c:v libx264 -preset medium -b:v {bitrate}k -maxrate {bitrate}k -bufsize {bitrate}k",
+            VideoEncoder.CpuH265 => $"-c:v libx265 -preset medium -b:v {bitrate}k -maxrate {bitrate}k -bufsize {bitrate}k",
+
+            _ => $"-c:v h264_nvenc -rc cbr_hq -preset p4 -b:v {bitrate}k"
+        };
+    }
+
+    private static string GetHwAccelArguments(VideoEncoder encoder)
+    {
+        return encoder switch
+        {
+            VideoEncoder.NvencH264 or VideoEncoder.NvencH265 => "-hwaccel cuda -hwaccel_output_format cuda",
+            //VideoEncoder.AmfH264 or VideoEncoder.AmfH265 => "-hwaccel d3d11va",
+            VideoEncoder.QsvH264 or VideoEncoder.QsvH265 => "-hwaccel qsv -hwaccel_output_format qsv",
+            _ => ""
+        };
+    }
+
     private static readonly Regex FpsRegex =
         new(@"(?:^|\s)fps=\s*(?<fps>\d+(?:\.\d+)?)", RegexOptions.Compiled);
 
@@ -127,6 +176,7 @@ public class FFmpegHelper
         return (float)bitrate;
     }
 
+    [Obsolete ("This method is deprecated. Use CutAndEncodeFromPointToEnd instead.", true)]
     public static async Task<bool> CutAndEncodeFromPointToEnd(
         string inputPath,
         string? outputPath,
@@ -205,11 +255,21 @@ public class FFmpegHelper
         var stopwatch = Stopwatch.StartNew();
         TimeSpan lastProgress = TimeSpan.Zero;
         var stats = new FfmpegStats();
-        
+
+        var hwAccelArgs = GetHwAccelArguments(video.Encoder);
+
         return await FFMpegArguments
-            .FromFileInput(video.FileInfo,options => options
-                .WithCustomArgument("-hwaccel cuda") // Use hardware acceleration for decoding
-                .WithCustomArgument("-hwaccel_output_format cuda"))
+            .FromFileInput(video.FileInfo,options =>
+            {
+                if (!string.IsNullOrEmpty(hwAccelArgs))
+                {
+                    var args = hwAccelArgs.Split(' ');
+                    foreach (var arg in args)
+                    {
+                        options.WithCustomArgument(arg);
+                    }
+                }
+            })
             .OutputToFile(video.OutputPath, overwrite: true, options =>
                 {
                     switch (video.AudioMixMode)
@@ -237,10 +297,11 @@ public class FFmpegHelper
 
                     if (video.StartTime != null)
                         options.Seek(TimeSpan.FromSeconds(video.StartTime)).WithDuration(video.VideoDuration);
-                    
+
                     if (encodeVideo)
                     {
-                        options.WithCustomArgument($"-c:v h264_nvenc -rc cbr_hq -preset p4 -b:v {(int)video.VideoBitrate}k");
+                        var encoderArgs = GetEncoderArguments(video.Encoder, (int)video.VideoBitrate);
+                        options.WithCustomArgument(encoderArgs);
                     }
                     else
                     {
@@ -301,19 +362,24 @@ public class FFmpegHelper
                 }
                 
                 stats.Remaining = video.VideoDuration - stats.Elapsed;
-                
 
-                if (fpsMatch.Success || timeMatch.Success || speedMatch.Success)
+                try
                 {
-                    onStats(new FfmpegStats
+                    if (fpsMatch.Success || timeMatch.Success || speedMatch.Success)
                     {
-                        ElapsedRealtime = stats.ElapsedRealtime,
-                        Elapsed = stats.Elapsed,
-                        Remaining = stats.Remaining,
-                        Fps = stats.Fps,
-                        Speed = stats.Speed,
-                        RawLine = stats.RawLine
-                    });
+                        onStats(new FfmpegStats
+                        {
+                            ElapsedRealtime = stats.ElapsedRealtime,
+                            Elapsed = stats.Elapsed,
+                            Remaining = stats.Remaining,
+                            Fps = stats.Fps,
+                            Speed = stats.Speed,
+                            RawLine = stats.RawLine
+                        });
+                    }
+                } catch (Exception e)
+                {
+                    Console.WriteLine(e);
                 }
             })
                 .ProcessAsynchronously();

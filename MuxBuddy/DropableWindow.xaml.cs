@@ -72,8 +72,12 @@ public partial class DropableWindow
             if (obj >= 100)
             {
                 TaskbarInfo.ProgressState = TaskbarItemProgressState.None;
+                
                 var hwnd = new WindowInteropHelper(this).Handle;
                 WindowAttention.FlashTaskbar(hwnd);
+
+                ProgressBar.Value = 0;
+                
                 MessageBox.Show($"File is Ready at \n {_videoInfo.OutputPath}");
             }
             else
@@ -107,7 +111,7 @@ public partial class DropableWindow
                     return;
             }
                 
-            if (droppedFiles.Count > 0 && !droppedFiles.First().Equals(files.First())) ClearFiles();
+            if (droppedFiles.Count > 0) ClearFiles();
             droppedFiles.Add(files[0]);
                 
             _VideoInfoBeforeEncoding  = FFmpegHelper.ExtractInfo(droppedFiles.First());
@@ -272,6 +276,11 @@ public partial class DropableWindow
             EncodeSettingsPanel.Visibility = _isEncodingEnabled ? Visibility.Visible : Visibility.Collapsed;
         
         EncodeSwitch.IsChecked = _isEncodingEnabled;
+
+        if ((int)_videoInfo.Encoder != VideoEncoderCombobox.SelectedIndex)
+        {
+            VideoEncoderCombobox.SelectedIndex = (int)_videoInfo.Encoder;
+        }
         
         bool MultiAudioStream = _VideoInfoBeforeEncoding.AudioStreamsCount > 1;
         
@@ -421,6 +430,7 @@ public partial class DropableWindow
         string ModifiedName = "";
         if (_videoInfo.AudioMixMode == 1 || _videoInfo.AudioMixMode == 2) ModifiedName += "-Resampled";
         if (_isEncodingEnabled && DesiredSize > 0) ModifiedName += $"-{DesiredSize}Mb";
+        if (_isEncodingEnabled) ModifiedName += $"-{_videoInfo.Encoder}";
         if (ModifiedName.Equals("")) ModifiedName = "-Modified";
         
         _videoInfo.OutputPath = Path.Combine(Path.GetDirectoryName(_videoInfo.FileInfo.FullName), Path.GetFileNameWithoutExtension(_videoInfo.FileInfo.Name) + ModifiedName + Path.GetExtension(_videoInfo.FileInfo.Name));
@@ -537,5 +547,15 @@ public partial class DropableWindow
     private void ClearBtn_OnClick(object sender, RoutedEventArgs e)
     {
         ClearFiles();
+    }
+
+    private void VideoEncoderCombobox_OnSelectionChanged(object sender, SelectionChangedEventArgs e)
+    {
+        var cb = sender as ComboBox;
+        if (cb == null || _videoInfo == null) return;
+
+        _videoInfo.Encoder = (VideoEncoder)cb.SelectedIndex;
+        Console.WriteLine($"Video Encoder: {_videoInfo.Encoder}");
+        UpdateVideoInfo();
     }
 }

@@ -4,20 +4,16 @@ using System.Diagnostics;
 using System.IO;
 using System.Windows;
 using System.Windows.Controls;
-using System.Windows.Input;
 using System.Windows.Interop;
 using System.Windows.Shell;
-using FFMpegCore;
 using Wpf.Ui.Controls;
 using Button = System.Windows.Controls.Button;
 using ComboBox = System.Windows.Controls.ComboBox;
 using DataFormats = System.Windows.DataFormats;
-using DataObject = System.Windows.DataObject;
 using DragDropEffects = System.Windows.DragDropEffects;
 using DragEventArgs = System.Windows.DragEventArgs;
 using MessageBox = System.Windows.MessageBox;
 using MessageBoxButton = System.Windows.MessageBoxButton;
-using MouseEventArgs = System.Windows.Input.MouseEventArgs;
 using Point = System.Windows.Point;
 
 namespace MuxBuddy;
@@ -29,6 +25,7 @@ public partial class DropableWindow
     private bool _isDragging;
     
     private bool _allowClose = true;
+    private bool _FFMpegInstalled = false;
     private float DesiredSize { get; set; } = 10;
     private event Action<double> onprogress;
     private event Action<FfmpegStats> onStatusUpdated;
@@ -45,6 +42,22 @@ public partial class DropableWindow
         
         onprogress += Ononprogress;
         onStatusUpdated += OnonStatusUpdated;
+        
+        CheckFFMpegInstalled();
+    }
+
+    private async void CheckFFMpegInstalled()
+    {
+        _FFMpegInstalled = await ProcessHelpers.EnsureFfmpegInstalledAsync();
+        
+        if (_FFMpegInstalled)
+        {
+            FFmpegWarning.Visibility = Visibility.Collapsed;
+        }
+        else
+        {
+            FFmpegWarning.Visibility = Visibility.Visible;
+        }
     }
 
     private void OnonStatusUpdated(FfmpegStats obj)
@@ -557,5 +570,42 @@ public partial class DropableWindow
         _videoInfo.Encoder = (VideoEncoder)cb.SelectedIndex;
         Console.WriteLine($"Video Encoder: {_videoInfo.Encoder}");
         UpdateVideoInfo();
+    }
+
+    private async  void WingetInstall_OnClick(object sender, RoutedEventArgs e)
+    {
+        bool func = await ProcessHelpers.WingetInstallFFmpeg();
+        if (func)
+            MessageBox.Show("FFmpeg installed successfully", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+        else
+            MessageBox.Show("Failed to install FFmpeg", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+
+    private async  void ChocoInstall_OnClick(object sender, RoutedEventArgs e)
+    {
+        bool func = await ProcessHelpers.ChocoInstallFFmpeg();
+        if (func)
+            MessageBox.Show("FFmpeg installed successfully", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+        else
+            MessageBox.Show("Failed to install FFmpeg", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+    
+    private async  void ScoopInstall_OnClick(object sender, RoutedEventArgs e)
+    {
+        bool func = await ProcessHelpers.ScoopInstallFFmpeg();
+        if (func)
+            MessageBox.Show("FFmpeg installed successfully", "Success", MessageBoxButton.OK, MessageBoxImage.Information);
+        else
+            MessageBox.Show("Failed to install FFmpeg", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+    }
+
+    private async  void WebInstall_OnClick(object sender, RoutedEventArgs e)
+    {
+        await ProcessHelpers.WebInstallFFmpeg();
+    }
+
+    private async  void RefreshFFmpeg_OnClick(object sender, RoutedEventArgs e)
+    {
+        CheckFFMpegInstalled();
     }
 }

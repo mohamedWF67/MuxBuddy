@@ -26,12 +26,53 @@
                 Opacity="1"
                 Visibility="Collapsed"
                 Panel.ZIndex="5">
-            <TextBlock Text="Drop items here"
+            <TextBlock Text="Drop Video here"
                        Foreground="White"
                        FontSize="22"
                        HorizontalAlignment="Center"
                        VerticalAlignment="Center"
                        FontWeight="Bold"/>
+        </Border>
+        <Border x:Name="FFmpegWarning"
+                Background="#C8000000"
+                Opacity="1"
+                Visibility="Collapsed"
+                Panel.ZIndex="5">
+            <StackPanel Orientation="Vertical"
+                        HorizontalAlignment="Center"
+                        VerticalAlignment="Center">
+                <ui:SymbolIcon FontSize="60" Symbol="CalendarCancel24" VerticalAlignment="Center"/>
+                <TextBlock Text="FFmpeg doesn't appear to be installed on your device"
+                           Foreground="White"
+                           FontSize="14"
+                           Margin="20"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+            <TextBlock Text="please install it using any of the following"
+                       Foreground="White"
+                       FontSize="14"
+                       Margin="0"
+                       TextAlignment="Center"
+                       TextWrapping="Wrap"
+                       HorizontalAlignment="Center"
+                       VerticalAlignment="Center"/>
+            <UniformGrid Columns="2" Rows="2" Margin="10">
+                <UniformGrid.Resources>
+                    <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                        <Setter Property="Margin" Value="2.5,0,2.5,5"/>
+                    </Style>
+                </UniformGrid.Resources>
+                <ui:Button Click="WingetInstall_OnClick" Content="WinGet (Best)"/>
+                <ui:Button Click="ChocoInstall_OnClick" Content="Chocolatey"/>
+                <ui:Button Click="ScoopInstall_OnClick" Content="Scoop"/>
+                <ui:Button Click="WebInstall_OnClick" Content="FFmpeg Source"/>
+            </UniformGrid>
+            <Separator Margin="0,2.5"/>
+            <Button HorizontalAlignment="Center" Content="Refresh" Click="RefreshFFmpeg_OnClick"/>
+            </StackPanel>
         </Border>
         <ui:TitleBar
             x:Name="TitleBar"

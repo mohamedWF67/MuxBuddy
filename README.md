@@ -57,7 +57,7 @@ A Windows WPF application for video encoding and processing with GPU acceleratio
 
 ## Version
 
-Current Version: **0.1.1**
+Current Version: **0.1.2**
 
 ## Author
 

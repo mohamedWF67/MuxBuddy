@@ -21,9 +21,8 @@ A Windows WPF application for video encoding and processing with GPU acceleratio
 
 ## Requirements
 
-- **Windows** with .NET 9.0
-- **NVIDIA GPU** with CUDA support for hardware acceleration
-- **FFmpeg** with CUDA support
+- **Windows** 10/11 with .NET 9.0
+- **FFmpeg**
 
 ## Dependencies
 
@@ -45,12 +44,12 @@ A Windows WPF application for video encoding and processing with GPU acceleratio
 ## Audio Mixing Modes
 
 - **Keep Original**: Preserve all audio streams as-is
-- **Merge**: Combine multiple audio streams into one
-- **Merge + Keep**: Create merged stream while keeping originals
+- **Mix ALL**: Combine multiple audio streams into one
+- **Mix + Keep**: Create merged stream while keeping originals
 
 ## Technical Details
 
-- **Video Codec**: H.264 with NVENC (NVIDIA GPU encoding)
+- **Video Codec**: H.264/H265 with NVENC/AMD/CPU
 - **Audio Codec**: AAC
 - **Encoding Preset**: P4 (balanced quality/speed)
 - **Rate Control**: CBR HQ (Constant Bitrate High Quality)
@@ -58,7 +57,7 @@ A Windows WPF application for video encoding and processing with GPU acceleratio
 
 ## Version
 
-Current Version: **0.1.0**
+Current Version: **0.1.1**
 
 ## Author
 

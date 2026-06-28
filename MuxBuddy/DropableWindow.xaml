@@ -1,24 +1,33 @@
-﻿<ui:FluentWindow x:Class="MuxBuddy.DropableWindow"
-        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
-        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-        xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
-        xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
-        mc:Ignorable="d"
-        WindowBackdropType="Mica"
-        Background="Transparent"
-        WindowStyle="None"
-        ExtendsContentIntoTitleBar="True"
-        Title="Mux Buddy"
-        AllowDrop="True"
-        Drop="MainWindow_OnDrop"
-        DragEnter="Window_DragEnter"
-        DragLeave="Window_DragLeave"
-        Height="400" MaxHeight="800" MinHeight="300"
-        Width="300" MaxWidth="400" MinWidth="300"
-        ResizeMode="NoResize">
+<ui:FluentWindow x:Class="MuxBuddy.DropableWindow"
+                 xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                 xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                 xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+                 xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+                 xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+                 xmlns:vm="clr-namespace:MuxBuddy"
+                 mc:Ignorable="d"
+                 WindowBackdropType="Mica"
+                 Background="Transparent"
+                 WindowStyle="None"
+                 ExtendsContentIntoTitleBar="True"
+                 Title="Mux Buddy"
+                 AllowDrop="True"
+                 Drop="MainWindow_OnDrop"
+                 DragEnter="Window_DragEnter"
+                 DragLeave="Window_DragLeave"
+                 Height="400" MaxHeight="800" MinHeight="300"
+                 Width="300" MaxWidth="400" MinWidth="300"
+                 ResizeMode="NoResize">
+    <ui:FluentWindow.DataContext>
+        <vm:DropableWindowViewModel/>
+    </ui:FluentWindow.DataContext>
+    <ui:FluentWindow.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVisibility"/>
+    </ui:FluentWindow.Resources>
     <Window.TaskbarItemInfo>
-        <TaskbarItemInfo x:Name="TaskbarInfo"/>
+        <TaskbarItemInfo x:Name="TaskbarInfo"
+                         ProgressState="{Binding TaskbarProgressState}"
+                         ProgressValue="{Binding TaskbarProgressValue}"/>
     </Window.TaskbarItemInfo>
     <Grid Background="Transparent">
         <Border x:Name="DropOverlay"
@@ -33,10 +42,9 @@
                        VerticalAlignment="Center"
                        FontWeight="Bold"/>
         </Border>
-        <Border x:Name="FFmpegWarning"
-                Background="#C8000000"
+        <Border Background="#C8000000"
                 Opacity="1"
-                Visibility="Collapsed"
+                Visibility="{Binding FFmpegWarningVisible, Converter={StaticResource BoolToVisibility}}"
                 Panel.ZIndex="5">
             <StackPanel Orientation="Vertical"
                         HorizontalAlignment="Center"
@@ -50,73 +58,86 @@
                            TextWrapping="Wrap"
                            HorizontalAlignment="Center"
                            VerticalAlignment="Center"/>
-            <TextBlock Text="please install it using any of the following"
-                       Foreground="White"
-                       FontSize="14"
-                       Margin="0"
-                       TextAlignment="Center"
-                       TextWrapping="Wrap"
-                       HorizontalAlignment="Center"
-                       VerticalAlignment="Center"/>
-            <UniformGrid Columns="2" Rows="2" Margin="10">
-                <UniformGrid.Resources>
-                    <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
-                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                        <Setter Property="Margin" Value="2.5,0,2.5,5"/>
-                    </Style>
-                </UniformGrid.Resources>
-                <ui:Button Click="WingetInstall_OnClick" Content="WinGet (Best)"/>
-                <ui:Button Click="ChocoInstall_OnClick" Content="Chocolatey"/>
-                <ui:Button Click="ScoopInstall_OnClick" Content="Scoop"/>
-                <ui:Button Click="WebInstall_OnClick" Content="FFmpeg Source"/>
-            </UniformGrid>
-            <Separator Margin="0,2.5"/>
-            <Button HorizontalAlignment="Center" Content="Refresh" Click="RefreshFFmpeg_OnClick"/>
+                <TextBlock Text="please install it using any of the following"
+                           Foreground="White"
+                           FontSize="14"
+                           Margin="0"
+                           TextAlignment="Center"
+                           TextWrapping="Wrap"
+                           HorizontalAlignment="Center"
+                           VerticalAlignment="Center"/>
+                <UniformGrid Columns="2" Rows="2" Margin="10">
+                    <UniformGrid.Resources>
+                        <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                            <Setter Property="Margin" Value="2.5,0,2.5,5"/>
+                        </Style>
+                    </UniformGrid.Resources>
+                    <ui:Button Command="{Binding WingetInstallCommand}" Content="WinGet (Best)"/>
+                    <ui:Button Command="{Binding ChocoInstallCommand}" Content="Chocolatey"/>
+                    <ui:Button Command="{Binding ScoopInstallCommand}" Content="Scoop"/>
+                    <ui:Button Command="{Binding WebInstallCommand}" Content="FFmpeg Source"/>
+                </UniformGrid>
+                <Separator Margin="0,2.5"/>
+                <Button HorizontalAlignment="Center" Content="Refresh" Command="{Binding RefreshFfmpegCommand}"/>
             </StackPanel>
         </Border>
-        <ui:TitleBar
-            x:Name="TitleBar"
-            Title="Mux Buddy"
-            Height="32"
-            ShowMinimize="True"
-            ShowMaximize="False"
-            ShowClose="True"/>
+        <ui:TitleBar x:Name="TitleBar"
+                     Title="{Binding Title}"
+                     Height="32"
+                     ShowMinimize="True"
+                     ShowMaximize="False"
+                     ShowClose="True">
+            <ui:TitleBar.TrailingContent>
+                <Button Width="46"
+                        Height="32"
+                        Background="Transparent"
+                        BorderBrush="{x:Null}"
+                        ToolTip="Minimize to tray"
+                        Click="TrayButton_Click">
+                    <ui:SymbolIcon Symbol="Settings32"
+                                   FontSize="12"
+                                   HorizontalAlignment="Center"
+                                   VerticalAlignment="Center"/>
+                </Button>
+            </ui:TitleBar.TrailingContent>
+        </ui:TitleBar>
         <Grid Margin="0,32,0,0">
-                <Grid>
-                    <ScrollViewer x:Name="VideoViewPanel" Margin="0,0,0,40" Visibility="Visible">
-                        <StackPanel Margin="5" VerticalAlignment="Top" HorizontalAlignment="Stretch" Orientation="Vertical">
-                            <TextBlock Text="Video Input" Margin="5,-5,5,2.5" FontWeight="Medium" FontSize="14" FontFamily="Segoe UI Variable"/>
-                            <ui:Card>
-                                <StackPanel>
-                                    <TextBlock x:Name="VideoPathTrace" TextWrapping="Wrap" Text="Drop a video to start"/>
-                                    <StackPanel x:Name="VideoBeforeDataPanel" Visibility="Collapsed">
+            <Grid>
+                <ScrollViewer x:Name="VideoViewPanel" Margin="0,0,0,40" Visibility="Visible">
+                    <StackPanel Margin="5" VerticalAlignment="Top" HorizontalAlignment="Stretch" Orientation="Vertical">
+                        <TextBlock Text="Video Input" Margin="5,-5,5,2.5" FontWeight="Medium" FontSize="14" FontFamily="Segoe UI Variable"/>
+                        <ui:Card>
+                            <StackPanel>
+                                <TextBlock TextWrapping="Wrap" Text="{Binding VideoPathText}"/>
+                                <StackPanel Visibility="{Binding HasVideo, Converter={StaticResource BoolToVisibility}}">
                                     <Separator Margin="0,2.5"/>
                                     <UniformGrid Columns="3">
                                         <StackPanel Orientation="Vertical">
                                             <TextBlock Text="Video"/>
-                                            <TextBlock x:Name="VideoBeforeBitRate" Text="0Kbps"/>
+                                            <TextBlock Text="{Binding VideoBeforeBitrateText}"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Vertical">
                                             <TextBlock Text="Audio"/>
-                                            <TextBlock x:Name="VideoBeforeAudioBitrate" Text="0Kbps"/>
+                                            <TextBlock Text="{Binding VideoBeforeAudioBitrateText}"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Vertical">
                                             <TextBlock Text="Total"/>
-                                            <TextBlock x:Name="VideoBeforeTotalBitrate" Text="0Kbps"/>
+                                            <TextBlock Text="{Binding VideoBeforeTotalBitrateText}"/>
                                         </StackPanel>
                                     </UniformGrid>
                                     <UniformGrid Columns="3" Margin="0,5,0,0">
                                         <StackPanel Orientation="Vertical">
                                             <TextBlock Text="Size"/>
-                                            <TextBlock x:Name="VideoBeforeSize" Text="0MB"/>
+                                            <TextBlock Text="{Binding VideoBeforeSizeText}"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Vertical">
                                             <TextBlock Text="Streams"/>
-                                            <TextBlock x:Name="VideoBeforeAudioCount" Text="0"/>
+                                            <TextBlock Text="{Binding VideoBeforeAudioCountText}"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Vertical">
                                             <TextBlock Text="Duration"/>
-                                            <TextBlock x:Name="VideoBeforeDuration" Text="0"/>
+                                            <TextBlock Text="{Binding VideoBeforeDurationText}"/>
                                         </StackPanel>
                                     </UniformGrid>
                                     <UniformGrid Columns="2" Margin="0,5,0,-2.5">
@@ -125,15 +146,15 @@
                                                 <Setter Property="HorizontalAlignment" Value="Stretch"/>
                                             </Style>
                                         </UniformGrid.Resources>
-                                        <ui:Button Margin="0,0,2.5,0" Click="OpenVideo_OnClick" Content="Open Video"/>
-                                        <ui:Button Margin="2.5,0,0,0" Click="OpenInExporer_OnClick" Content="Open in Explorer"/>
+                                        <ui:Button Margin="0,0,2.5,0" Command="{Binding OpenVideoCommand}" Content="Open Video"/>
+                                        <ui:Button Margin="2.5,0,0,0" Command="{Binding OpenInExplorerCommand}" Content="Open in Explorer"/>
                                     </UniformGrid>
-                                    </StackPanel>
                                 </StackPanel>
-                            </ui:Card>
-                            <StackPanel x:Name="VideoEncoderPropertiesPanel" Visibility="Collapsed">
-                                <TextBlock Text="Time" Margin="5,2.5" FontWeight="Medium" FontSize="14" FontFamily="Segoe UI Variable"/>
-                                <ui:Card x:Name="VideoTimeSpan">
+                            </StackPanel>
+                        </ui:Card>
+                        <StackPanel Visibility="{Binding HasVideo, Converter={StaticResource BoolToVisibility}}">
+                            <TextBlock Text="Time" Margin="5,2.5" FontWeight="Medium" FontSize="14" FontFamily="Segoe UI Variable"/>
+                            <ui:Card>
                                 <UniformGrid Columns="2">
                                     <UniformGrid.Resources>
                                         <Style TargetType="StackPanel">
@@ -143,64 +164,60 @@
                                     </UniformGrid.Resources>
                                     <StackPanel Orientation="Vertical">
                                         <TextBlock Text="Start"/>
-                                        <ui:NumberBox x:Name="VideoStartTimeNumberBox" ValueChanged="VideoStartTime_OnValueChanged" SpinButtonPlacementMode="Hidden" Minimum="0"/>
-                                        <TextBlock x:Name="VideoStartTimeTxt"/>
+                                        <ui:NumberBox Value="{Binding StartTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" SpinButtonPlacementMode="Hidden" Minimum="{Binding StartTimeMinimum}" Maximum="{Binding StartTimeMaximum}"/>
+                                        <TextBlock Text="{Binding StartTimeText}"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Vertical">
                                         <TextBlock Text="End"/>
-                                        <ui:NumberBox x:Name="VideoEndTimeNumberBox" ValueChanged="VideoEndTime_OnValueChanged" SpinButtonPlacementMode="Hidden" Minimum="0"/>    
-                                        <TextBlock x:Name="VideoEndTimeTxt"/>
+                                        <ui:NumberBox Value="{Binding EndTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" SpinButtonPlacementMode="Hidden" Minimum="{Binding EndTimeMinimum}" Maximum="{Binding EndTimeMaximum}"/>
+                                        <TextBlock Text="{Binding EndTimeText}"/>
                                     </StackPanel>
                                 </UniformGrid>
-                                </ui:Card>
-                                <TextBlock Text="Video Encoding" Margin="5,2.5" FontWeight="Medium" FontSize="14" FontFamily="Segoe UI Variable"/>
-                                <ui:Card x:Name="VideoFileSize">
+                            </ui:Card>
+                            <TextBlock Text="Video Encoding" Margin="5,2.5" FontWeight="Medium" FontSize="14" FontFamily="Segoe UI Variable"/>
+                            <ui:Card>
                                 <StackPanel Orientation="Vertical">
-                                    <ui:ToggleSwitch x:Name="EncodeSwitch" IsChecked="True" Checked="EncodeSwitch_OnChecked" Unchecked="EncodeSwitch_OnUnChecked" Content="Encode"/>
-                                    <StackPanel x:Name="EncodeSettingsPanel" Visibility="Visible" Orientation="Vertical" Margin="0,10,0,0">
+                                    <ui:ToggleSwitch IsChecked="{Binding IsEncodingEnabled, Mode=TwoWay}" Content="Encode"/>
+                                    <StackPanel Visibility="{Binding EncodeSettingsVisible, Converter={StaticResource BoolToVisibility}}" Orientation="Vertical" Margin="0,10,0,0">
                                         <UniformGrid Columns="2" Margin="0,0,0,10">
                                             <UniformGrid.Resources>
                                                 <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
                                                     <Setter Property="HorizontalAlignment" Value="Stretch"/>
                                                 </Style>
                                             </UniformGrid.Resources>
-                                            <ui:Button Margin="0,0,2.5,0" Click="BitrateBySizeBtn_OnClick" BorderThickness="1" Content="By Size"/>
-                                            <ui:Button Margin="2.5,0,0,0" Click="BitrateByBitrateBtn_OnClick" Content="By Bitrate"/>
+                                            <ui:Button Margin="0,0,2.5,0" Command="{Binding SetBitrateBySizeCommand}" BorderThickness="1" Content="By Size"/>
+                                            <ui:Button Margin="2.5,0,0,0" Command="{Binding SetBitrateByBitrateCommand}" Content="By Bitrate"/>
                                         </UniformGrid>
-                                        <StackPanel x:Name="VideoBySizePanel" Visibility="Visible">
-                                        <UniformGrid x:Name="VideoFileSizeDefaultBtns" Columns="4">
-                                            <UniformGrid.Resources>
-                                                <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
-                                                    <Setter Property="Margin" Value="2.5,0"/>
-                                                    <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                                                </Style>
-                                            </UniformGrid.Resources>
-                                            <ui:Button Click="VideoBitratePresetbtn_OnClick" Content="10"/>
-                                            <ui:Button Click="VideoBitratePresetbtn_OnClick" Content="20"/>
-                                            <ui:Button Click='VideoBitratePresetbtn_OnClick' Content="30"/>
-                                            <ui:Button Click="VideoBitratePresetbtn_OnClick" Content="40"/>
-                                        </UniformGrid>
-                                        <Separator Margin="0,2.5"/>
-                                        <DockPanel Margin="0,0,0,0">
-                                            <CheckBox Checked="CustomSizeCheckBox_OnChecked" Unchecked="CustomSizeCheckBox_OnUnChecked"/>
-                                            <ui:NumberBox ValueChanged="CustomSizeNumberBox_OnValueChanged" x:Name="CustomSizeNumberBox" IsEnabled="False" SpinButtonPlacementMode="Hidden" Value="0" Minimum="0"/>
-                                        </DockPanel>
+                                        <StackPanel Visibility="{Binding BitrateBySizeVisible, Converter={StaticResource BoolToVisibility}}">
+                                            <UniformGrid Columns="4" IsEnabled="{Binding PresetSizesEnabled}">
+                                                <UniformGrid.Resources>
+                                                    <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                                                        <Setter Property="Margin" Value="2.5,0"/>
+                                                        <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                                                    </Style>
+                                                </UniformGrid.Resources>
+                                                <ui:Button Command="{Binding SetPresetSizeCommand}" CommandParameter="10" Content="10"/>
+                                                <ui:Button Command="{Binding SetPresetSizeCommand}" CommandParameter="20" Content="20"/>
+                                                <ui:Button Command="{Binding SetPresetSizeCommand}" CommandParameter="30" Content="30"/>
+                                                <ui:Button Command="{Binding SetPresetSizeCommand}" CommandParameter="40" Content="40"/>
+                                            </UniformGrid>
+                                            <Separator Margin="0,2.5"/>
+                                            <DockPanel>
+                                                <CheckBox IsChecked="{Binding CustomSizeEnabled, Mode=TwoWay}"/>
+                                                <ui:NumberBox Value="{Binding DesiredSize, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CustomSizeEnabled}" SpinButtonPlacementMode="Hidden" Minimum="0"/>
+                                            </DockPanel>
                                         </StackPanel>
-                                        <StackPanel x:Name="VideoByBitratePanel" Visibility="Collapsed">
-                                            <ui:NumberBox ValueChanged="VideoCustomBitrateNumberBox_OnValueChanged" x:Name="VideoCustomBitrateNumberBox" SpinButtonPlacementMode="Hidden" Minimum="0"/>
+                                        <StackPanel Visibility="{Binding BitrateByBitrateVisible, Converter={StaticResource BoolToVisibility}}">
+                                            <ui:NumberBox Value="{Binding CustomVideoBitrate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" SpinButtonPlacementMode="Hidden" Minimum="0"/>
                                         </StackPanel>
                                         <Separator Margin="0,10"/>
-                                        <Grid Margin="0,0,0,0">
+                                        <Grid>
                                             <Grid.ColumnDefinitions>
                                                 <ColumnDefinition Width="*"/>
                                                 <ColumnDefinition Width="Auto"/>
                                             </Grid.ColumnDefinitions>
                                             <TextBlock Margin="0,0,10,0" VerticalAlignment="Center" Text="Video Codec"/>
-                                            <ComboBox x:Name="VideoEncoderCombobox"
-                                                      Width="150"
-                                                      SelectedIndex="6"
-                                                      Grid.Column="1"
-                                                      SelectionChanged="VideoEncoderCombobox_OnSelectionChanged">
+                                            <ComboBox Width="150" SelectedIndex="{Binding SelectedEncoderIndex, Mode=TwoWay}" Grid.Column="1">
                                                 <ComboBoxItem Content="NVENC H.264"/>
                                                 <ComboBoxItem Content="NVENC H.265"/>
                                                 <ComboBoxItem Content="AMF H.264"/>
@@ -213,123 +230,110 @@
                                         </Grid>
                                     </StackPanel>
                                 </StackPanel>
-                                </ui:Card>
-                                <TextBlock Text="Audio" Margin="5,2.5" FontWeight="Medium" FontSize="14" FontFamily="Segoe UI Variable"/>
-                                <ui:Card>
-                                    <StackPanel Orientation="Vertical">
-                                        <Grid Margin="0,0,0,0">
-                                            <Grid.ColumnDefinitions>
-                                                <ColumnDefinition Width="*"/>
-                                                <ColumnDefinition Width="Auto"/>
-                                            </Grid.ColumnDefinitions>
-                                            <TextBlock Margin="0,0,10,0" VerticalAlignment="Center" Text="Audio Bitrate"/>
-                                            <ComboBox x:Name="VideoAudioBitrateCombobox" 
-                                                      Width="150"
-                                                      SelectedIndex="0"
-                                                      Grid.Column="1"
-                                                      DockPanel.Dock="Right"
-                                                      SelectionChanged="VideoAudioBitrateCombobox_OnSelectionChanged">
-                                                <ComboBoxItem Content="Default"/>
-                                                <ComboBoxItem Content="96"/>
-                                                <ComboBoxItem Content="128"/>
-                                                <ComboBoxItem Content="192"/>
-                                                <ComboBoxItem Content="320"/>
-                                                <ComboBoxItem Content="Custom"/>
-                                            </ComboBox>
-                                        </Grid>
-                                        <ui:NumberBox x:Name="VideoAudioCustomBitrateNumberBox" Margin="0,10,0,0" Visibility="Collapsed" ValueChanged="VideoAudioCustomBitrateNumberBox_OnValueChanged" Minimum="0"/>
-                                    </StackPanel>
-                                </ui:Card>
-                                <ui:Card>
-                                    <Grid Margin="0,0,0,0">
+                            </ui:Card>
+                            <TextBlock Text="Audio" Margin="5,2.5" FontWeight="Medium" FontSize="14" FontFamily="Segoe UI Variable"/>
+                            <ui:Card>
+                                <StackPanel Orientation="Vertical">
+                                    <Grid>
                                         <Grid.ColumnDefinitions>
                                             <ColumnDefinition Width="*"/>
                                             <ColumnDefinition Width="Auto"/>
                                         </Grid.ColumnDefinitions>
-                                        <TextBlock Margin="0,0,10,0" VerticalAlignment="Center" Text="Audio Mix Mode"/>
-                                        <ComboBox Grid.Column="1" x:Name="VideoAudioMixerCombobox"
-                                                  Width="150"
-                                                  SelectedIndex="0"
-                                                  SelectionChanged="VideoAudioMixerCombobox_OnSelectionChanged">
-                                            <ComboBoxItem Content="Don't Mix"/>
-                                            <ComboBoxItem Content="Mix All"/>
-                                            <ComboBoxItem Content="Mix and keep"/>
+                                        <TextBlock Margin="0,0,10,0" VerticalAlignment="Center" Text="Audio Bitrate"/>
+                                        <ComboBox Width="150" SelectedIndex="{Binding SelectedAudioBitrateIndex, Mode=TwoWay}" Grid.Column="1" DockPanel.Dock="Right">
+                                            <ComboBoxItem Content="Default"/>
+                                            <ComboBoxItem Content="96" IsEnabled="{Binding CanUseAudio96}"/>
+                                            <ComboBoxItem Content="128" IsEnabled="{Binding CanUseAudio128}"/>
+                                            <ComboBoxItem Content="192" IsEnabled="{Binding CanUseAudio192}"/>
+                                            <ComboBoxItem Content="320" IsEnabled="{Binding CanUseAudio320}"/>
+                                            <ComboBoxItem Content="Custom"/>
                                         </ComboBox>
                                     </Grid>
-                                </ui:Card>
-                            </StackPanel>
-                            <StackPanel x:Name="VideoAfterDataPanel" Visibility="Collapsed" Orientation="Vertical">
+                                    <ui:NumberBox Margin="0,10,0,0" Visibility="{Binding AudioCustomBitrateVisible, Converter={StaticResource BoolToVisibility}}" Value="{Binding CustomAudioBitrate, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" Minimum="0"/>
+                                </StackPanel>
+                            </ui:Card>
+                            <ui:Card>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <TextBlock Margin="0,0,10,0" VerticalAlignment="Center" Text="Audio Mix Mode"/>
+                                    <ComboBox Grid.Column="1" Width="150" SelectedIndex="{Binding SelectedAudioMixModeIndex, Mode=TwoWay}">
+                                        <ComboBoxItem Content="Don't Mix"/>
+                                        <ComboBoxItem Content="Mix All" IsEnabled="{Binding CanMixAudio}"/>
+                                        <ComboBoxItem Content="Mix and keep" IsEnabled="{Binding CanMixAudio}"/>
+                                    </ComboBox>
+                                </Grid>
+                            </ui:Card>
+                        </StackPanel>
+                        <StackPanel Visibility="{Binding HasVideo, Converter={StaticResource BoolToVisibility}}" Orientation="Vertical">
                             <TextBlock Text="Output" Margin="5,2.5" FontWeight="Medium" FontSize="14" FontFamily="Segoe UI Variable"/>
                             <ui:Card>
                                 <StackPanel>
-                                    <TextBlock x:Name="VideoAfterPathTrace" TextWrapping="Wrap" Text="Drop a video to start"/>
-                                    <Separator x:Name="OutputNameSeparator" Visibility="Visible" Margin="0,2.5"/>
-                                    <StackPanel x:Name="ProgressPanel" Orientation="Vertical" Visibility="Collapsed" Margin="0,0,0,5">
-                                        <ProgressBar x:Name="ProgressBar" Minimum="0"
-                                                     Maximum="100"
-                                                     Padding="0"
-                                                     Margin="0,2.5"
-                                                     BorderThickness="0"
-                                                     Height="5"/>
+                                    <TextBlock TextWrapping="Wrap" Text="{Binding OutputPathText}"/>
+                                    <Separator Visibility="{Binding OutputSeparatorVisible, Converter={StaticResource BoolToVisibility}}" Margin="0,2.5"/>
+                                    <StackPanel Orientation="Vertical" Visibility="{Binding IsProgressVisible, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,5">
+                                        <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressValue}" Padding="0" Margin="0,2.5" BorderThickness="0" Height="5"/>
                                         <UniformGrid Columns="3">
                                             <StackPanel Orientation="Vertical">
                                                 <TextBlock Text="FPS"/>
-                                                <TextBlock x:Name="VideoStatsFPS" Text="0"/>
+                                                <TextBlock Text="{Binding StatsFpsText}"/>
                                             </StackPanel>
                                             <StackPanel Orientation="Vertical">
                                                 <TextBlock Text="Elapsed"/>
-                                                <TextBlock x:Name="VideoStatsElapsed" Text="0"/>
+                                                <TextBlock Text="{Binding StatsElapsedText}"/>
                                             </StackPanel>
                                             <StackPanel Orientation="Vertical">
                                                 <TextBlock Text="Remaining"/>
-                                                <TextBlock x:Name="VideoStatsET" Text="0"/>
+                                                <TextBlock Text="{Binding StatsRemainingText}"/>
                                             </StackPanel>
                                         </UniformGrid>
                                     </StackPanel>
                                     <UniformGrid Columns="3">
                                         <StackPanel Orientation="Vertical">
                                             <TextBlock Text="Video"/>
-                                            <TextBlock x:Name="VideoAfterBitRate" Text="0Kbps"/>
+                                            <TextBlock Text="{Binding VideoAfterBitrateText}"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Vertical">
                                             <TextBlock Text="Audio"/>
-                                            <TextBlock x:Name="VideoAfterAudioBitrate" Text="0Kbps"/>
+                                            <TextBlock Text="{Binding VideoAfterAudioBitrateText}"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Vertical">
                                             <TextBlock Text="Total"/>
-                                            <TextBlock x:Name="VideoAfterTotalBitrate" Text="0Kbps"/>
+                                            <TextBlock Text="{Binding VideoAfterTotalBitrateText}"/>
                                         </StackPanel>
                                     </UniformGrid>
                                     <UniformGrid Columns="3" Margin="0,5,0,0">
                                         <StackPanel Orientation="Vertical">
                                             <TextBlock Text="Size"/>
-                                            <TextBlock x:Name="VideoAfterSize" Text="0MB"/>
+                                            <TextBlock Text="{Binding VideoAfterSizeText}"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Vertical">
                                             <TextBlock Text="Streams"/>
-                                            <TextBlock x:Name="VideoAfterAudioCount" Text="0"/>
+                                            <TextBlock Text="{Binding VideoAfterAudioCountText}"/>
                                         </StackPanel>
                                         <StackPanel Orientation="Vertical">
                                             <TextBlock Text="Duration"/>
-                                            <TextBlock x:Name="VideoAfterDuration" Text="0"/>
+                                            <TextBlock Text="{Binding VideoAfterDurationText}"/>
                                         </StackPanel>
                                     </UniformGrid>
                                 </StackPanel>
                             </ui:Card>
-                            </StackPanel>
                         </StackPanel>
-                    </ScrollViewer>
-                    <UniformGrid VerticalAlignment="Bottom" Margin="2.5,5" Columns="2">
-                        <UniformGrid.Resources>
-                            <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
-                                <Setter Property="Margin" Value="2.5,0"/>
-                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                            </Style>
-                        </UniformGrid.Resources>
-                        <ui:Button x:Name="MainBtn" IsEnabled="False" Click="MainBtn_OnClick" Content="Encode"/>
-                        <ui:Button x:Name="ClearBtn" IsEnabled="False" Click="ClearBtn_OnClick" Content="Clear"/>
-                    </UniformGrid>
-                </Grid>
+                    </StackPanel>
+                </ScrollViewer>
+                <UniformGrid VerticalAlignment="Bottom" Margin="2.5,5" Columns="2">
+                    <UniformGrid.Resources>
+                        <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                            <Setter Property="Margin" Value="2.5,0"/>
+                            <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                        </Style>
+                    </UniformGrid.Resources>
+                    <ui:Button IsEnabled="{Binding IsMainEnabled}" Command="{Binding EncodeCommand}" Content="Encode"/>
+                    <ui:Button IsEnabled="{Binding IsClearEnabled}" Command="{Binding ClearFilesCommand}" Content="Clear"/>
+                </UniformGrid>
+            </Grid>
         </Grid>
     </Grid>
 </ui:FluentWindow>

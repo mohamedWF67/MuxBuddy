@@ -83,7 +83,7 @@
             </StackPanel>
         </Border>
         <ui:TitleBar x:Name="TitleBar"
-                     Title="{Binding Title}"
+                     Title="Mux Buddy"
                      Height="32"
                      ShowMinimize="True"
                      ShowMaximize="False"
@@ -164,12 +164,12 @@
                                     </UniformGrid.Resources>
                                     <StackPanel Orientation="Vertical">
                                         <TextBlock Text="Start"/>
-                                        <ui:NumberBox Value="{Binding StartTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" SpinButtonPlacementMode="Hidden" Minimum="{Binding StartTimeMinimum}" Maximum="{Binding StartTimeMaximum}"/>
+                                        <ui:NumberBox Value="{Binding StartTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" SpinButtonPlacementMode="Hidden" Minimum="0" Maximum="{Binding EndTime}"/>
                                         <TextBlock Text="{Binding StartTimeText}"/>
                                     </StackPanel>
                                     <StackPanel Orientation="Vertical">
                                         <TextBlock Text="End"/>
-                                        <ui:NumberBox Value="{Binding EndTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" SpinButtonPlacementMode="Hidden" Minimum="{Binding EndTimeMinimum}" Maximum="{Binding EndTimeMaximum}"/>
+                                        <ui:NumberBox Value="{Binding EndTime, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}" SpinButtonPlacementMode="Hidden" Minimum="{Binding StartTime}" Maximum="{Binding EndTimeMaximum}"/>
                                         <TextBlock Text="{Binding EndTimeText}"/>
                                     </StackPanel>
                                 </UniformGrid>
@@ -272,7 +272,7 @@
                             <ui:Card>
                                 <StackPanel>
                                     <TextBlock TextWrapping="Wrap" Text="{Binding OutputPathText}"/>
-                                    <Separator Visibility="{Binding OutputSeparatorVisible, Converter={StaticResource BoolToVisibility}}" Margin="0,2.5"/>
+                                    <Separator Margin="0,2.5"/>
                                     <StackPanel Orientation="Vertical" Visibility="{Binding IsProgressVisible, Converter={StaticResource BoolToVisibility}}" Margin="0,0,0,5">
                                         <ProgressBar Minimum="0" Maximum="100" Value="{Binding ProgressValue}" Padding="0" Margin="0,2.5" BorderThickness="0" Height="5"/>
                                         <UniformGrid Columns="3">
@@ -331,7 +331,7 @@
                         </Style>
                     </UniformGrid.Resources>
                     <ui:Button IsEnabled="{Binding IsMainEnabled}" Command="{Binding EncodeCommand}" Content="Encode"/>
-                    <ui:Button IsEnabled="{Binding IsClearEnabled}" Command="{Binding ClearFilesCommand}" Content="Clear"/>
+                    <ui:Button IsEnabled="{Binding HasVideo}" Command="{Binding ClearFilesCommand}" Content="Clear"/>
                 </UniformGrid>
             </Grid>
         </Grid>

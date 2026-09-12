@@ -1,0 +1,59 @@
+﻿# .NET build outputs
+**/bin/
+**/obj/
+[Bb]in/
+[Oo]bj/
+**/[Bb]in/
+**/[Oo]bj/
+# Visual Studio / Rider
+.vs/
+.idea/
+*.user
+*.suo
+*.userosscache
+*.sln.docstates
+
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+[Ll]ogs/
+/build-verify
+/build-taskbar-verify
+
+# NuGet
+*.nupkg
+*.snupkg
+**/packages/*
+!**/packages/build/
+project.lock.json
+project.fragment.lock.json
+artifacts/
+
+# WPF temporary files
+*_wpftmp.csproj
+GeneratedInternalTypeHelper.g.cs
+GeneratedInternalTypeHelper.g.i.cs
+*.g.cs
+*.g.i.cs
+
+# Logs and databases
+*.log
+*.sdf
+*.opensdf
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# JVM crash logs
+hs_err_pid*.log

@@ -1,4 +1,5 @@
 using System.ComponentModel;
+using System.Media;
 using System.Windows;
 using System.Windows.Interop;
 using System.Windows.Shell;
@@ -63,9 +64,9 @@ public partial class DropableWindow
         Close();
     }
 
-    private void TrayButton_Click(object sender, RoutedEventArgs e)
+    private async void TrayButton_Click(object sender, RoutedEventArgs e)
     {
-        MessageBox.Show("Mux Buddy is running in the background", "Mux Buddy", MessageBoxButton.OK, MessageBoxImage.Information);
+        MessageBox.Show("Mux Buddy Settings", "Mux Buddy", MessageBoxButton.OK, MessageBoxImage.Information);
     }
 
     private void ShowMessage(string message, string caption, MessageBoxImage icon)

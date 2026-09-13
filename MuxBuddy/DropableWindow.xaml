@@ -9,14 +9,15 @@
                  WindowBackdropType="Mica"
                  Background="Transparent"
                  WindowStyle="None"
+                 WindowStartupLocation="CenterScreen"
                  ExtendsContentIntoTitleBar="True"
                  Title="Mux Buddy"
                  AllowDrop="True"
                  Drop="MainWindow_OnDrop"
                  DragEnter="Window_DragEnter"
                  DragLeave="Window_DragLeave"
-                 Height="400" MaxHeight="800" MinHeight="300"
-                 Width="300" MaxWidth="400" MinWidth="300"
+                 Height="500" MaxHeight="800" MinHeight="300"
+                 Width="400" MaxWidth="400" MinWidth="300"
                  ResizeMode="NoResize">
     <ui:FluentWindow.DataContext>
         <vm:DropableWindowViewModel/>
@@ -82,31 +83,34 @@
                 <Button HorizontalAlignment="Center" Content="Refresh" Command="{Binding RefreshFfmpegCommand}"/>
             </StackPanel>
         </Border>
-        <ui:TitleBar x:Name="TitleBar"
-                     Title="Mux Buddy"
-                     Height="32"
-                     ShowMinimize="True"
-                     ShowMaximize="False"
-                     ShowClose="True">
+        <ui:TitleBar
+            Height="32"
+            ShowMinimize="True"
+            ShowMaximize="False"
+            ShowClose="True">
+            <ui:TitleBar.Icon>
+                <ui:ImageIcon Source="Assets/MuxBuddyLogo_Clear.ico"/>
+            </ui:TitleBar.Icon>
+            <ui:TitleBar.Header>
+                <ui:TextBlock Text="Mux Buddy" VerticalAlignment="Center" FontTypography="Caption"/>
+            </ui:TitleBar.Header>
             <ui:TitleBar.TrailingContent>
-                <Button Width="46"
-                        Height="32"
-                        Background="Transparent"
-                        BorderBrush="{x:Null}"
-                        ToolTip="Minimize to tray"
-                        Click="TrayButton_Click">
-                    <ui:SymbolIcon Symbol="Settings32"
-                                   FontSize="12"
-                                   HorizontalAlignment="Center"
-                                   VerticalAlignment="Center"/>
-                </Button>
+                <ui:Button 
+                    Width="46"
+                    Height="32"
+                    Background="Transparent"
+                    BorderBrush="{x:Null}"
+                    ToolTip="Settings"
+                    CornerRadius="0"
+                    Icon="{ui:SymbolIcon Settings20}"
+                    Click="TrayButton_Click"/>
             </ui:TitleBar.TrailingContent>
         </ui:TitleBar>
         <Grid Margin="0,32,0,0">
-            <Grid>
-                <ScrollViewer x:Name="VideoViewPanel" Margin="0,0,0,40" Visibility="Visible">
-                    <StackPanel Margin="5" VerticalAlignment="Top" HorizontalAlignment="Stretch" Orientation="Vertical">
-                        <TextBlock Text="Video Input" Margin="5,-5,5,2.5" FontWeight="Medium" FontSize="14" FontFamily="Segoe UI Variable"/>
+            <Grid RowDefinitions="*,Auto">
+                <ScrollViewer x:Name="VideoViewPanel" Margin="0,0,0,0" Padding="24,0" Visibility="Visible">
+                    <StackPanel VerticalAlignment="Top" HorizontalAlignment="Stretch" Orientation="Vertical">
+                        <ui:TextBlock Text="Input" Margin="0,12,0,2.5" FontTypography="Title"/>
                         <ui:Card>
                             <StackPanel>
                                 <TextBlock TextWrapping="Wrap" Text="{Binding VideoPathText}"/>
@@ -153,7 +157,7 @@
                             </StackPanel>
                         </ui:Card>
                         <StackPanel Visibility="{Binding HasVideo, Converter={StaticResource BoolToVisibility}}">
-                            <TextBlock Text="Time" Margin="5,2.5" FontWeight="Medium" FontSize="14" FontFamily="Segoe UI Variable"/>
+                            <ui:TextBlock Text="Time" Margin="0,12,0,2.5" FontTypography="Subtitle"/>
                             <ui:Card>
                                 <UniformGrid Columns="2">
                                     <UniformGrid.Resources>
@@ -174,7 +178,7 @@
                                     </StackPanel>
                                 </UniformGrid>
                             </ui:Card>
-                            <TextBlock Text="Video Encoding" Margin="5,2.5" FontWeight="Medium" FontSize="14" FontFamily="Segoe UI Variable"/>
+                            <ui:TextBlock Text="Video Encoding" Margin="0,12,0,2.5" FontTypography="Subtitle"/>                            
                             <ui:Card>
                                 <StackPanel Orientation="Vertical">
                                     <ui:ToggleSwitch IsChecked="{Binding IsEncodingEnabled, Mode=TwoWay}" Content="Encode"/>
@@ -231,7 +235,7 @@
                                     </StackPanel>
                                 </StackPanel>
                             </ui:Card>
-                            <TextBlock Text="Audio" Margin="5,2.5" FontWeight="Medium" FontSize="14" FontFamily="Segoe UI Variable"/>
+                            <ui:TextBlock Text="Audio Encoding" Margin="0,12,0,2.5" FontTypography="Subtitle"/>                     
                             <ui:Card>
                                 <StackPanel Orientation="Vertical">
                                     <Grid>
@@ -268,8 +272,8 @@
                             </ui:Card>
                         </StackPanel>
                         <StackPanel Visibility="{Binding HasVideo, Converter={StaticResource BoolToVisibility}}" Orientation="Vertical">
-                            <TextBlock Text="Output" Margin="5,2.5" FontWeight="Medium" FontSize="14" FontFamily="Segoe UI Variable"/>
-                            <ui:Card>
+                            <ui:TextBlock Text="Output" Margin="0,12,0,2.5" FontTypography="Title"/>    
+                            <ui:Card Margin="0,0,0,12">
                                 <StackPanel>
                                     <TextBlock TextWrapping="Wrap" Text="{Binding OutputPathText}"/>
                                     <Separator Margin="0,2.5"/>
@@ -323,16 +327,18 @@
                         </StackPanel>
                     </StackPanel>
                 </ScrollViewer>
-                <UniformGrid VerticalAlignment="Bottom" Margin="2.5,5" Columns="2">
-                    <UniformGrid.Resources>
-                        <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
-                            <Setter Property="Margin" Value="2.5,0"/>
-                            <Setter Property="HorizontalAlignment" Value="Stretch"/>
-                        </Style>
-                    </UniformGrid.Resources>
-                    <ui:Button IsEnabled="{Binding IsMainEnabled}" Command="{Binding EncodeCommand}" Content="Encode"/>
-                    <ui:Button IsEnabled="{Binding HasVideo}" Command="{Binding ClearFilesCommand}" Content="Clear"/>
-                </UniformGrid>
+                <Grid Grid.Row="1" Background="{ui:ThemeResource LayerOnMicaBaseAltFillColorDefaultBrush}">
+                    <UniformGrid VerticalAlignment="Bottom" Margin="24" Columns="2">
+                        <UniformGrid.Resources>
+                            <Style TargetType="ui:Button" BasedOn="{StaticResource {x:Type ui:Button}}">
+                                <Setter Property="Margin" Value="2.5,0"/>
+                                <Setter Property="HorizontalAlignment" Value="Stretch"/>
+                            </Style>
+                        </UniformGrid.Resources>
+                        <ui:Button Background="{ui:ThemeResource AccentTextFillColorTertiaryBrush}" IsEnabled="{Binding IsMainEnabled}" Command="{Binding EncodeCommand}" Content="Encode"/>
+                        <ui:Button IsEnabled="{Binding HasVideo}" Command="{Binding ClearFilesCommand}" Content="Clear"/>
+                    </UniformGrid>
+                </Grid>
             </Grid>
         </Grid>
     </Grid>

@@ -93,8 +93,6 @@ public partial class DropableWindowViewModel : ObservableObject
     public string VideoAfterAudioCountText => (_video?.AudioStreamsCount ?? 0).ToString();
     public string VideoAfterDurationText => FormatTime(_video?.VideoDuration ?? TimeSpan.Zero);
 
-    public DropableWindowViewModel() => _ = RefreshFfmpeg();
-
     public void LoadVideo(string[] files)
     {
         if (files is not [var path])
@@ -211,7 +209,6 @@ public partial class DropableWindowViewModel : ObservableObject
     private async Task InstallFfmpegAsync(Func<Task<bool>> installer)
     {
         var installed = await installer();
-        await RefreshFfmpeg();
         MessageRequested?.Invoke(
             installed ? "FFmpeg installed successfully" : "Failed to install FFmpeg",
             installed ? "Success" : "Error",
@@ -222,8 +219,6 @@ public partial class DropableWindowViewModel : ObservableObject
     [RelayCommand] private Task ChocoInstall() => InstallFfmpegAsync(ProcessHelpers.ChocoInstallFFmpeg);
     [RelayCommand] private Task ScoopInstall() => InstallFfmpegAsync(ProcessHelpers.ScoopInstallFFmpeg);
     [RelayCommand] private Task WebInstall() => ProcessHelpers.WebInstallFFmpeg();
-    [RelayCommand] private async Task RefreshFfmpeg() => FFmpegWarningVisible = !await ProcessHelpers.EnsureFfmpegInstalledAsync();
-
     private void OnProgress(double value) => RunOnUi(() =>
     {
         if (value >= 100)

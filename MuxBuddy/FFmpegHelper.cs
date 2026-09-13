@@ -9,7 +9,7 @@ using FFMpegCore.Enums;
 namespace MuxBuddy;
 
 public static class FFmpegHelperProperties{
-    public static string HelperVersion { get; } = "0.5.8.24";
+    public static string HelperVersion { get; } = "2.0";
 }
 
 public enum VideoEncoder
@@ -144,7 +144,7 @@ public class FFmpegHelper
     {
         var analysis = FFProbe.Analyse(inputPath);
         var fileInfo = new FileInfo(inputPath);
-
+        
         return new VideoInfo
         {
             VideoBitrate = analysis.PrimaryVideoStream.BitRate / 1000,

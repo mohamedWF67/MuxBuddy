@@ -23,4 +23,11 @@
         <Resource Include="Assets\MuxBuddyLogo_Clear.ico" />
     </ItemGroup>
 
+    <ItemGroup>
+        <Content Include="ffmpeg\*">
+            <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+            <CopyToPublishDirectory>PreserveNewest</CopyToPublishDirectory>
+        </Content>
+    </ItemGroup>
+
 </Project>
